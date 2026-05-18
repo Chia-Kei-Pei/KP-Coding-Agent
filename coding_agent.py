@@ -7,7 +7,7 @@ client = Client(host=OLLAMA_HOST)
 model = "gemma4"
 
 if __name__ == "__main__":
-    system_prompt = "You are my assistant"
+    system_prompt = "You are my coding assistant. Write code in the 'src' folder."
     user_prompt = input("Enter your prompt: ").strip()
 
     messages = [
