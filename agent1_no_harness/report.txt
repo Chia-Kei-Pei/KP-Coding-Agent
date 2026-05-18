@@ -1,0 +1,5 @@
+Written by KPEI.
+
+I asked the AI to code me a simple Pong game in the user prompt, and I told it in the system prompt to write the code into the 'src' folder. Guess what? It just gave the code as part of its reply, it did not save a single file in 'src'. Absolute disgrace.
+
+This is the failure of a model, and by extension the failure of me, when there is no harness.
