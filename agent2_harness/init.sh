@@ -5,10 +5,17 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$ROOT_DIR"
 
-# Replace these commands with the correct commands for your repository.
-INSTALL_CMD=(npm install)
-VERIFY_CMD=(npm test)
-START_CMD=(npm run dev)
+# Activate conda environment.
+# conda activate does not work in non-interactive shells by default,
+# so we source conda.sh first to make the activate command available.
+CONDA_BASE="$(conda info --base 2>/dev/null)"
+source "${CONDA_BASE}/etc/profile.d/conda.sh"
+conda activate AI-Engg-HTX
+echo "==> Activated conda environment: $CONDA_DEFAULT_ENV"
+
+INSTALL_CMD=(pip install -r requirements.txt)
+VERIFY_CMD=(python -m pytest)
+START_CMD=(python coding_agent.py)
 
 echo "==> Working directory: $PWD"
 echo "==> Syncing dependencies"
