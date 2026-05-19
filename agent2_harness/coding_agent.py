@@ -63,20 +63,16 @@ tools = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "file_dir": {
+                    "file_path": {
                         "type": "string",
-                        "description": "The directory part of the absolute file path, e.g. 'C:\\Users\\User\\Documents'. Never use directory from relative file path such as '.\\Documents'."
-                    },
-                    "file_name": {
-                        "type": "string",
-                        "description": "The filename only, e.g. 'main.py' or 'helpers.js'. Do not include any folder prefix."
+                        "description": "The absolute file path including file directory and file name, e.g. 'C:\\Users\\User\\Documents\\file.txt'. Never use relative file path such as '.\\Documents\\file.txt'."
                     },
                     "content": {
                         "type": "string",
                         "description": "The full file content to write."
                     }
                 },
-                "required": ["file_dir", "file_name", "content"]
+                "required": ["file_path", "content"]
             }
         }
     }
@@ -87,7 +83,7 @@ tools = [
 # ---------------------------------------------------------------------------
 
 def read_file(file_path: str) -> str:
-    """Read a file from file_path. Always use absolute file path."""
+    """Read a file from <file_path>. Always use absolute file path."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
@@ -96,10 +92,9 @@ def read_file(file_path: str) -> str:
     except Exception as e:
         return f"Error reading {file_path}: {e}"
 
-def write_file(file_dir: str, file_name: str, content: str) -> str:
-    """Write content to <dir>/<filename>, creating directories as needed. Always use absolute file path."""
-    os.makedirs(file_dir, exist_ok=True)
-    file_path = os.path.join(file_dir, file_name)
+def write_file(file_path: str, content: str) -> str:
+    """Write content to <file_path>, creating directories as needed. Always use absolute file path."""
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
     return f"Written to {file_path}"
@@ -110,10 +105,10 @@ def handle_tool_call(tool_name: str, tool_args: dict) -> str:
         print(f"[tool] read_file: {tool_args["file_path"]}")
         return result
     if tool_name == "write_file":
-        result = write_file(tool_args["file_dir"], tool_args["file_name"], tool_args["content"])
-        print(f"[tool] write_file: {os.path.join(tool_args["file_dir"], tool_args["file_name"])}")
+        result = write_file(tool_args["file_path"], tool_args["content"])
+        print(f"[tool] write_file: {tool_args["file_path"]}")
         return result
-    return f"[Unknown tool] {tool_name}"
+    return f"[tool] {tool_name}: UNKNOWN"
 
 # ---------------------------------------------------------------------------
 # Main
