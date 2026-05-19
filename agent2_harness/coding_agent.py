@@ -11,23 +11,18 @@ from ollama import Client, ResponseError
 SCRIPT_DIR    = os.path.dirname(os.path.abspath(__file__))
 HARNESS_FILES = ["AGENTS.md", "init.sh", "feature_list.json", "claude-progress.md"]
 
-def read_harness_files() -> list:
-    """Read each harness file and return a list of (filename, content) tuples.
+def build_harness_context() -> str:
+    """Read each harness file and build a single context block for the system prompt.
     Missing files are reported but do not abort startup."""
-    contents = []
+    sections = []
     for filename in HARNESS_FILES:
         filepath = os.path.join(SCRIPT_DIR, filename)
         try:
             with open(filepath, "r", encoding="utf-8") as f:
-                contents.append((filename, f.read()))
+                sections.append(f"=== {filename} ===\n{f.read()}")
             print(f"[harness] Read: {filename}")
         except FileNotFoundError:
             print(f"[harness] Warning: {filename} not found — skipping.")
-    return contents
-
-def build_harness_context(contents: list) -> str:
-    """Format harness file contents into a single context block for the system prompt."""
-    sections = [f"=== {filename} ===\n{content}" for filename, content in contents]
     return "\n\n".join(sections)
 
 # ---------------------------------------------------------------------------
@@ -125,8 +120,7 @@ def handle_tool_call(tool_name: str, tool_args: dict) -> str:
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    harness_contents = read_harness_files()
-    harness_context  = build_harness_context(harness_contents)
+    harness_context = build_harness_context()
 
     system_prompt = (
         "You are a coding assistant operating inside a harness.\n\n"
