@@ -16,7 +16,7 @@ unset SSL_CERT_FILE  # conda activation sets this to a non-existent path; unset 
 
 INSTALL_CMD=(pip install -r requirements.txt)
 VERIFY_CMD=(true)  # no tests yet — replace with e.g. (python -m pytest) when ready
-START_CMD=(python coding_agent.py)
+START_CMD=(python src/pong_game.py)
 
 echo "==> Working directory: $PWD"
 echo "==> Syncing dependencies"
