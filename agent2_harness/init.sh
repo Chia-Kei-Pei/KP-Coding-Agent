@@ -12,6 +12,7 @@ CONDA_BASE="$(conda info --base 2>/dev/null)"
 source "${CONDA_BASE}/etc/profile.d/conda.sh"
 conda activate AI-Engg-HTX
 echo "==> Activated conda environment: $CONDA_DEFAULT_ENV"
+unset SSL_CERT_FILE  # conda activation sets this to a non-existent path; unset to avoid SSL errors
 
 INSTALL_CMD=(pip install -r requirements.txt)
 VERIFY_CMD=(true)  # no tests yet — replace with e.g. (python -m pytest) when ready
