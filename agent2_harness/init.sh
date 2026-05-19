@@ -14,7 +14,7 @@ conda activate AI-Engg-HTX
 echo "==> Activated conda environment: $CONDA_DEFAULT_ENV"
 
 INSTALL_CMD=(pip install -r requirements.txt)
-VERIFY_CMD=(python -m pytest)
+VERIFY_CMD=(true)  # no tests yet — replace with e.g. (python -m pytest) when ready
 START_CMD=(python coding_agent.py)
 
 echo "==> Working directory: $PWD"
