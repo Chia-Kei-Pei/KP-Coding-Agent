@@ -181,7 +181,7 @@ if __name__ == "__main__":
                     try:
                         result = available_functions[tc.function.name](**tc.function.arguments)
                     except TypeError as e:
-                        result = f"Error calling {tc.function.name}: {e}. Please retry with all required arguments."
+                        result = f"Error calling {tc.function.name}: {e}. Check that you have given all the required arguments for this tool with their correct names."
                     print(f"Result: {result}")
                     messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
                 else:
