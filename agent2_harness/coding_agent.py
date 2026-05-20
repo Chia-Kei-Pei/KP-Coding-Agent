@@ -34,19 +34,71 @@ MODEL  = "gemma4"
 client = Client(host=OLLAMA_HOST)
 
 # ---------------------------------------------------------------------------
+# Tool definitions — explicit JSON schema passed to the Ollama client.
+# Defining the schema explicitly (rather than passing the function directly)
+# ensures the model receives the exact parameter names and descriptions
+# intended, with no inference ambiguity.
+# See: https://ollama.com/blog/tool-support
+# ---------------------------------------------------------------------------
+
+tools = [
+    {
+        "type": "function",
+        "function": {
+            "name": "read_file",
+            "description": "Read a file and return its contents. Always use an absolute file path.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": (
+                            "The absolute path of the file to read. "
+                            "Example: 'C:/Users/User/project/src/file.py'. "
+                            "Never use a relative path."
+                        )
+                    }
+                },
+                "required": ["file_path"]
+            }
+        }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "write_file",
+            "description": (
+                "Write content to a file, creating directories as needed. "
+                "Always use this tool to save code — never output code in your reply. "
+                "Both file_path and content are required — never call this tool without both."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "file_path": {
+                        "type": "string",
+                        "description": (
+                            "The absolute path of the file to write. "
+                            "Example: 'C:/Users/User/project/src/file.py'. "
+                            "Never use a relative path."
+                        )
+                    },
+                    "content": {
+                        "type": "string",
+                        "description": "The full file content to write."
+                    }
+                },
+                "required": ["file_path", "content"]
+            }
+        }
+    }
+]
+
+# ---------------------------------------------------------------------------
 # Tool implementations
-# See https://docs.ollama.com/capabilities/tool-calling#python
 # ---------------------------------------------------------------------------
 
 def read_file(file_path: str) -> str:
-    """Read a file and return its contents.
-    
-    Args:
-        file_path: absolute path of the file to be read, e.g. 'C:/Users/User/project/src/file.py'. Never use a relative path.
-    
-    Returns:
-        The contents of the file.
-    """
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
@@ -56,15 +108,6 @@ def read_file(file_path: str) -> str:
         return f"Error reading {file_path}: {e}"
 
 def write_file(file_path: str, content: str) -> str:
-    """Write content to a file, creating directories as needed.
-    
-    Args:
-        file_path: absolute path of the file to be read, e.g. 'C:/Users/User/project/src/file.py'. Never use a relative path. Always use this tool to save code, never output code in your reply.
-        content: The full file content to write.
-
-    Returns:
-        A message confirming that the file has been written.
-    """
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -91,6 +134,7 @@ if __name__ == "__main__":
         "Never output code blocks in your reply — always call write_file instead. "
         f"Your working directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
+        "When calling write_file, you MUST always provide both file_path AND content. Never call write_file with only content. "
     )
 
     print("\n================= User Prompt ===============================\n")
@@ -106,7 +150,7 @@ if __name__ == "__main__":
     try:
         # Agentic loop: keep going until the model stops calling tools
         while True:
-            response: ChatResponse = client.chat(model=MODEL, messages=messages, tools=[read_file, write_file], think=True)
+            response: ChatResponse = client.chat(model=MODEL, messages=messages, tools=tools, think=True)
 
             # Append the assistant turn to history
             messages.append(response.message.model_dump())
@@ -140,7 +184,7 @@ if __name__ == "__main__":
                     print(f"Result: {result}")
                     messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
                 else:
-                    print(f"Unknown tool {tc.function.name} with arguments {tc.function.arguments}")
+                    print(f"Unknown tool: {tc.function.name} with arguments {tc.function.arguments}")
 
     except ResponseError as e:
         raise RuntimeError(f"Ollama error: {e}") from e
