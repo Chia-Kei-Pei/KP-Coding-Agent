@@ -117,7 +117,7 @@ if __name__ == "__main__":
                     if len(msg) <= 200:
                         print(msg)
                     else:
-                        print(msg[:200] + "... (print() exceeded 200 char limit)")
+                        print(msg[:200] + "… … …")
                     result = available_functions[tc.function.name](**tc.function.arguments)
                     print(f"Result: {result}")
                     messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
