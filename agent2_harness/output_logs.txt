@@ -1,0 +1,2 @@
+Hello world program: 00:02:35.30
+It written to <proj_root>/src/hello_world.py instead of <proj_root>/agent2_harness/src/hello_world.py. I need to specify agent2_harness next time.
