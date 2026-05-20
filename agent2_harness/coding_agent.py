@@ -74,6 +74,7 @@ if __name__ == "__main__":
         "When writing code, you MUST use the write_file tool to save it to the 'src' folder. "
         "You may use the read_file tool to read existing files from the 'src' folder. "
         "Never output code blocks in your reply — always call write_file instead."
+        "Your working directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory"
     )
 
     user_prompt = input("Enter your prompt: ").strip()
