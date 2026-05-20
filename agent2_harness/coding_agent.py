@@ -113,7 +113,11 @@ if __name__ == "__main__":
             # Execute each tool call and feed results back
             for tc in tool_calls:
                 if tc.function.name in available_functions:
-                    print(f"Calling {tc.function.name} with arguments {tc.function.arguments}")
+                    msg = f"Calling {tc.function.name} with arguments {tc.function.arguments}"
+                    if len(msg) <= 200:
+                        print(msg)
+                    else:
+                        print(msg[:200] + "... (print() exceeded 200 char limit)")
                     result = available_functions[tc.function.name](**tc.function.arguments)
                     print(f"Result: {result}")
                     messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
