@@ -16,7 +16,7 @@ unset SSL_CERT_FILE  # conda activation sets this to a non-existent path; unset 
 
 INSTALL_CMD=(pip install -r requirements.txt)
 VERIFY_CMD=(true)  # no tests yet — replace with e.g. (python -m pytest) when ready
-START_CMD=() # AGENT must write the command to execute the resulting program in these round brackets, e.g. (python src/hello_world.py)
+START_CMD=() # AGENT must write the command to execute the resulting program in these round brackets, e.g. (python <file_path>) where <file_path> is the absolute directory of the resulting program. Never use releative file path.
 
 echo "==> Working directory: $PWD"
 echo "==> Syncing dependencies"

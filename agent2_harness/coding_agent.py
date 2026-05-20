@@ -16,7 +16,7 @@ def build_harness_context() -> str:
     Missing files are reported but do not abort startup."""
     sections = []
     for filename in HARNESS_FILES:
-        filepath = os.path.join(SCRIPT_DIR, filename)
+        filepath = os.path.join(SCRIPT_DIR, "harness", filename)
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 sections.append(f"=== {filename} ===\n{f.read()}")
