@@ -135,6 +135,7 @@ if __name__ == "__main__":
         f"Your Working Directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
         "When calling write_file, you MUST always provide both file_path AND content. Never call write_file with only content. "
+        "ALWAYS WRITE CODE TO A FILE, NEVER WRITE CODE IN YOUR REPLY."
     )
 
     print("\n================= User Prompt ===============================\n")
