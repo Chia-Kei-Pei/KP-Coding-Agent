@@ -19,10 +19,10 @@ def build_harness_context() -> str:
         filepath = os.path.join(SCRIPT_DIR, "harness", filename)
         try:
             with open(filepath, "r", encoding="utf-8") as f:
-                sections.append(f"=== {filename} ===\n{f.read()}")
-            print(f"[harness] Read: {filename}")
+                sections.append(f"=== {filepath} ===\n{f.read()}")
+            print(f"[harness] Read: {filepath}")
         except FileNotFoundError:
-            print(f"[harness] Warning: {filename} not found — skipping.")
+            print(f"[harness] Warning: {filepath} not found — skipping.")
     return "\n\n".join(sections)
 
 # ---------------------------------------------------------------------------
@@ -54,7 +54,7 @@ tools = [
                         "type": "string",
                         "description": (
                             "The absolute path of the file to read. "
-                            "Example: 'C:/Users/User/project/src/file.py'. "
+                            "Example: 'C:\\Users\\User\\project\\src\\file.py'. "
                             "Never use a relative path."
                         )
                     }
@@ -79,7 +79,7 @@ tools = [
                         "type": "string",
                         "description": (
                             "The absolute path of the file to write. "
-                            "Example: 'C:/Users/User/project/src/file.py'. "
+                            "Example: 'C:\\Users\\User\\project\\src\\file.py'. "
                             "Never use a relative path."
                         )
                     },
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "When writing code, you MUST use the write_file tool to save it to the 'src' folder. "
         "You may use the read_file tool to read existing files from the 'src' folder. "
         "Never output code blocks in your reply — always call write_file instead. "
-        f"Your working directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
+        f"Your Working Directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
         "When calling write_file, you MUST always provide both file_path AND content. Never call write_file with only content. "
     )
