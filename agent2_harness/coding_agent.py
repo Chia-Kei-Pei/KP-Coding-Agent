@@ -39,7 +39,9 @@ client = Client(host=OLLAMA_HOST)
 # ---------------------------------------------------------------------------
 
 def read_file(file_path: str) -> str:
-    """Read a file from <file_path>. Always use absolute file path."""
+    """Read a file and return its contents.
+    REQUIRED: file_path must always be provided as an absolute path, e.g. 'C:/Users/User/project/src/file.py'.
+    Never use a relative path."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
@@ -49,7 +51,10 @@ def read_file(file_path: str) -> str:
         return f"Error reading {file_path}: {e}"
 
 def write_file(file_path: str, content: str) -> str:
-    """Write content to <file_path>, creating directories as needed. Always use absolute file path."""
+    """Write content to a file, creating directories as needed.
+    REQUIRED: file_path must always be provided as an absolute path, e.g. 'C:/Users/User/project/src/file.py'.
+    content is the full file content to write.
+    Never use a relative path. Always use this tool to save code — never output code in your reply."""
     os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
@@ -73,9 +78,10 @@ if __name__ == "__main__":
         f"{harness_context}\n\n"
         "When writing code, you MUST use the write_file tool to save it to the 'src' folder. "
         "You may use the read_file tool to read existing files from the 'src' folder. "
-        "Never output code blocks in your reply — always call write_file instead."
+        "Never output code blocks in your reply — always call write_file instead. "
         f"Your working directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
+        "When calling write_file, you MUST always provide both file_path AND content arguments. Never call write_file with only content. "
     )
 
     print("\n================= User Prompt ===============================\n")
@@ -95,7 +101,7 @@ if __name__ == "__main__":
 
             # Append the assistant turn to history
             messages.append(response.message.model_dump())
-            
+
             print("Thinking: ", response.message.thinking)
             print("Content: ", response.message.content)
 
@@ -118,7 +124,10 @@ if __name__ == "__main__":
                         print(msg)
                     else:
                         print(msg[:200] + "… … …")
-                    result = available_functions[tc.function.name](**tc.function.arguments)
+                    try:
+                        result = available_functions[tc.function.name](**tc.function.arguments)
+                    except TypeError as e:
+                        result = f"Error calling {tc.function.name}: {e}. Please retry with all required arguments."
                     print(f"Result: {result}")
                     messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
                 else:
