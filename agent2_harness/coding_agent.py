@@ -1,7 +1,7 @@
 import os
 import time
 import json
-from ollama import Client, ResponseError
+from ollama import Client, ChatResponse, ResponseError
 
 # ---------------------------------------------------------------------------
 # Harness file loading — read context files at startup
@@ -30,56 +30,12 @@ def build_harness_context() -> str:
 # ---------------------------------------------------------------------------
 
 OLLAMA_HOST = "http://localhost:11434"
+MODEL  = "gemma4"
 client = Client(host=OLLAMA_HOST)
-model  = "gemma4"
-
-# ---------------------------------------------------------------------------
-# Tool definitions — read_file and write_file
-# ---------------------------------------------------------------------------
-
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "read_file",
-            "description": "Read the content of a file.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "The absolute file path including file directory and file name, e.g. 'C:\\Users\\User\\Documents\\file.txt'. Never use relative file path such as '.\\Documents\\file.txt'."
-                    }
-                },
-                "required": ["file_path"]
-            }
-        }
-    },
-    {
-        "type": "function",
-        "function": {
-            "name": "write_file",
-            "description": "Write content to a file. Always use this to save code — never output code in your reply.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "file_path": {
-                        "type": "string",
-                        "description": "The absolute file path including file directory and file name, e.g. 'C:\\Users\\User\\Documents\\file.txt'. Never use relative file path such as '.\\Documents\\file.txt'."
-                    },
-                    "content": {
-                        "type": "string",
-                        "description": "The full file content to write."
-                    }
-                },
-                "required": ["file_path", "content"]
-            }
-        }
-    }
-]
 
 # ---------------------------------------------------------------------------
 # Tool implementations
+# See https://docs.ollama.com/capabilities/tool-calling#python
 # ---------------------------------------------------------------------------
 
 def read_file(file_path: str) -> str:
@@ -99,16 +55,10 @@ def write_file(file_path: str, content: str) -> str:
         f.write(content)
     return f"Written to {file_path}"
 
-def handle_tool_call(tool_name: str, tool_args: dict) -> str:
-    if tool_name == "read_file":
-        result = read_file(tool_args["file_path"])
-        print(f"[tool] read_file: {tool_args["file_path"]}")
-        return result
-    if tool_name == "write_file":
-        result = write_file(tool_args["file_path"], tool_args["content"])
-        print(f"[tool] write_file: {tool_args["file_path"]}")
-        return result
-    return f"[tool] {tool_name}: UNKNOWN"
+available_functions = {
+    "read_file": read_file,
+    "write_file": write_file
+}
 
 # ---------------------------------------------------------------------------
 # Main
@@ -137,17 +87,19 @@ if __name__ == "__main__":
     try:
         # Agentic loop: keep going until the model stops calling tools
         while True:
-            response = client.chat(model=model, messages=messages, tools=tools)
-            msg = response["message"]
+            response: ChatResponse = client.chat(model=MODEL, messages=messages, tools=[read_file, write_file], think=True)
 
             # Append the assistant turn to history
-            messages.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": msg.get("tool_calls")})
+            messages.append(response.message.model_dump())
+            
+            print("Thinking: ", response.message.thinking)
+            print("Content: ", response.message.content)
 
-            tool_calls = msg.get("tool_calls") or []
+            tool_calls = response.message.tool_calls
 
             if not tool_calls:
                 # No more tool calls — print the final reply and exit
-                print(msg.get("content", "").strip())
+                print(response.message.content)
                 elapsed = time.time() - start_time
                 hours, rem = divmod(elapsed, 3600)
                 minutes, seconds = divmod(rem, 60)
@@ -156,14 +108,13 @@ if __name__ == "__main__":
 
             # Execute each tool call and feed results back
             for tc in tool_calls:
-                fn     = tc["function"]["name"]
-                args   = tc["function"]["arguments"]
-                result = handle_tool_call(fn, args)
-                messages.append({
-                    "role":    "tool",
-                    "name":    fn,
-                    "content": result
-                })
+                if tc.function.name in available_functions:
+                    print(f"Calling {tc.function.name} with arguments {tc.function.arguments}")
+                    result = available_functions[tc.function.name](**tc.function.arguments)
+                    print(f"Result: {result}")
+                    messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
+                else:
+                    print(f"Unknown tool {tc.function.name} with arguments {tc.function.arguments}")
 
     except ResponseError as e:
         raise RuntimeError(f"Ollama error: {e}") from e
