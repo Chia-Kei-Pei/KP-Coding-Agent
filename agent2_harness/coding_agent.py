@@ -78,6 +78,7 @@ if __name__ == "__main__":
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
     )
 
+    print("\n==============================================================\n")
     user_prompt = input("User Prompt: ").strip()
     print("\n================= Agent Output ===============================\n")
     start_time  = time.time()
