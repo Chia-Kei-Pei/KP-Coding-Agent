@@ -1,6 +1,5 @@
 import os
 import time
-import json
 from openrouter import OpenRouter
 
 # ---------------------------------------------------------------------------
@@ -27,17 +26,15 @@ def build_harness_context() -> str:
 
 # ---------------------------------------------------------------------------
 # Initialize OpenRouter client
+# See: https://openrouter.ai/docs/client-sdks/python/overview
 # ---------------------------------------------------------------------------
 
 client = OpenRouter(api_key=os.getenv("LLM_API_KEY"))
-MODEL = os.getenv("MODEL")
+MODEL  = os.getenv("MODEL")
 
 # ---------------------------------------------------------------------------
-# Tool definitions — explicit JSON schema passed to the Ollama client.
-# Defining the schema explicitly (rather than passing the function directly)
-# ensures the model receives the exact parameter names and descriptions
-# intended, with no inference ambiguity.
-# See: https://ollama.com/blog/tool-support
+# Tool definitions — explicit JSON schema passed to the OpenRouter client.
+# See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
 # ---------------------------------------------------------------------------
 
 tools = [
@@ -113,7 +110,7 @@ def write_file(file_path: str, content: str) -> str:
     return f"Written to {file_path}"
 
 available_functions = {
-    "read_file": read_file,
+    "read_file":  read_file,
     "write_file": write_file
 }
 
@@ -140,7 +137,7 @@ if __name__ == "__main__":
     print("\n================= User Prompt ===============================\n")
     user_prompt = input("> ").strip()
     print("\n================= Agent Output ===============================\n")
-    start_time  = time.time()
+    start_time = time.time()
 
     messages = [
         {"role": "system", "content": system_prompt},
@@ -148,46 +145,77 @@ if __name__ == "__main__":
     ]
 
     try:
-        # Agentic loop: keep going until the model stops calling tools
-        while True:
-            response = client.chat.send(model=MODEL, messages=messages, tools=tools)
+        # Agentic loop: keep going until the model stops calling tools.
+        # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
+        with client:
+            while True:
+                response = client.chat.send(model=MODEL, messages=messages, tools=tools)
 
-            # Append the assistant turn to history
-            messages.append(response.message.model_dump())
+                # OpenRouter response schema: response.choices[0].message
+                choice  = response.choices[0]
+                message = choice.message
 
-            print("Thinking: ", response.message.thinking)
-            print("Content: ", response.message.content)
+                print("Content: ", message.content)
 
-            tool_calls = response.message.tool_calls
+                # Append assistant turn to history as a plain dict
+                messages.append({
+                    "role":       "assistant",
+                    "content":    message.content or "",
+                    "tool_calls": [
+                        {
+                            "id":       tc.id,
+                            "type":     "function",
+                            "function": {
+                                "name":      tc.function.name,
+                                "arguments": tc.function.arguments
+                            }
+                        }
+                        for tc in (message.tool_calls or [])
+                    ] or None
+                })
 
-            if not tool_calls:
-                # No more tool calls — print the final reply and exit
-                print(response.message.content)
-                elapsed = time.time() - start_time
-                hours, rem = divmod(elapsed, 3600)
-                minutes, seconds = divmod(rem, 60)
-                print(f"\nTime taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}")
-                break
+                tool_calls = message.tool_calls or []
 
-            # Execute each tool call and feed results back
-            for tc in tool_calls:
-                if tc.function.name in available_functions:
-                    msg = f"Calling {tc.function.name} with arguments {tc.function.arguments}"
-                    if len(msg) <= 200:
-                        print(msg)
+                if not tool_calls:
+                    # No more tool calls — print the final reply and exit
+                    print(message.content)
+                    elapsed = time.time() - start_time
+                    hours, rem = divmod(elapsed, 3600)
+                    minutes, seconds = divmod(rem, 60)
+                    print(f"\nTime taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}")
+                    break
+
+                # Execute each tool call and feed results back
+                for tc in tool_calls:
+                    fn_name = tc.function.name
+                    # arguments may be a dict already or a JSON string depending on the model
+                    fn_args = tc.function.arguments
+                    if isinstance(fn_args, str):
+                        import json
+                        fn_args = json.loads(fn_args)
+
+                    msg = f"Calling {fn_name} with arguments {fn_args}"
+                    print(msg if len(msg) <= 200 else msg[:200] + "… … …")
+
+                    if fn_name in available_functions:
+                        try:
+                            result = available_functions[fn_name](**fn_args)
+                        except TypeError as e:
+                            result = (
+                                f"Error calling {fn_name}: {e}. "
+                                "Check that you have given all the required arguments for this tool with their correct names.\n"
+                            )
                     else:
-                        print(msg[:200] + "… … …")
-                    try:
-                        result = available_functions[tc.function.name](**tc.function.arguments)
-                    except TypeError as e:
-                        result = f"Error calling {tc.function.name}: {e}. Check that you have given all the required arguments for this tool with their correct names.\n"
-                        # result += f"Remember, this is the schema for {tc.function.name}"
-                    print(f"Result: {result}")
-                    messages.append({"role": "tool", "tool_name": tc.function.name, "content": str(result)})
-                else:
-                    print(f"Unknown tool: {tc.function.name} with arguments {tc.function.arguments}")
+                        result = f"Unknown tool: {fn_name}"
 
-    except ResponseError as e:
-        raise RuntimeError(f"Ollama error: {e}") from e
+                    print(f"Result: {result}")
+
+                    # Tool result message — role must be "tool" with matching tool_call_id
+                    messages.append({
+                        "role":         "tool",
+                        "tool_call_id": tc.id,
+                        "content":      str(result)
+                    })
+
     except Exception as e:
         raise RuntimeError(f"Failed to generate response: {e}") from e
