@@ -1,5 +1,6 @@
 import os
 import time
+import json
 from openrouter import OpenRouter
 
 # ---------------------------------------------------------------------------
@@ -37,7 +38,7 @@ MODEL  = os.getenv("MODEL")
 # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
 # ---------------------------------------------------------------------------
 
-tools = [
+tools: list = [
     {
         "type": "function",
         "function": {
@@ -139,7 +140,7 @@ if __name__ == "__main__":
     print("\n================= Agent Output ===============================\n")
     start_time = time.time()
 
-    messages = [
+    messages: list = [
         {"role": "system", "content": system_prompt},
         {"role": "user",   "content": user_prompt}
     ]
@@ -152,33 +153,32 @@ if __name__ == "__main__":
                 response = client.chat.send(model=MODEL, messages=messages, tools=tools)
 
                 # OpenRouter response schema: response.choices[0].message
-                choice  = response.choices[0]
-                message = choice.message
+                reply = response.choices[0].message
 
-                print("Content: ", message.content)
+                print("Content: ", reply.content)
 
                 # Append assistant turn to history as a plain dict
                 messages.append({
-                    "role":       "assistant",
-                    "content":    message.content or "",
+                    "role": "assistant",
+                    "content": reply.content or "",
                     "tool_calls": [
                         {
-                            "id":       tc.id,
-                            "type":     "function",
+                            "id": tc.id,
+                            "type": "function",
                             "function": {
-                                "name":      tc.function.name,
+                                "name": tc.function.name,
                                 "arguments": tc.function.arguments
                             }
                         }
-                        for tc in (message.tool_calls or [])
+                        for tc in (reply.tool_calls or [])
                     ] or None
                 })
 
-                tool_calls = message.tool_calls or []
+                tool_calls = reply.tool_calls or []
 
                 if not tool_calls:
                     # No more tool calls — print the final reply and exit
-                    print(message.content)
+                    print(reply.content)
                     elapsed = time.time() - start_time
                     hours, rem = divmod(elapsed, 3600)
                     minutes, seconds = divmod(rem, 60)
@@ -191,11 +191,10 @@ if __name__ == "__main__":
                     # arguments may be a dict already or a JSON string depending on the model
                     fn_args = tc.function.arguments
                     if isinstance(fn_args, str):
-                        import json
                         fn_args = json.loads(fn_args)
 
                     msg = f"Calling {fn_name} with arguments {fn_args}"
-                    print(msg if len(msg) <= 200 else msg[:200] + "… … …")
+                    print(msg if len(msg) <= 200 else msg[:200] + "… … …") # prevent printing of super long arguments such as file contents
 
                     if fn_name in available_functions:
                         try:
@@ -203,7 +202,7 @@ if __name__ == "__main__":
                         except TypeError as e:
                             result = (
                                 f"Error calling {fn_name}: {e}. "
-                                "Check that you have given all the required arguments for this tool with their correct names.\n"
+                                "Tool calling must specify all arguments by name\n"
                             )
                     else:
                         result = f"Unknown tool: {fn_name}"
