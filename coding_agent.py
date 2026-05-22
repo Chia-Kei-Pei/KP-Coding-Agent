@@ -163,11 +163,16 @@ if __name__ == "__main__":
                 model=MODEL,
                 messages=messages,
                 tools=tools,
-                extra_body={"include_reasoning": True}
+                extra_body={
+                    "reasoning": {
+                        "effort": "low"  # Maps to thinkingLevel: "low"
+                    }
+                },
             )
 
             # OpenAI SDK response schema: response.choices[0].message
             reply = response.choices[0].message
+            # getattr(reply, "reasoning", None)
 
             if reply.reasoning:
                 print("Thinking: ", reply.reasoning, end="\n\n")
