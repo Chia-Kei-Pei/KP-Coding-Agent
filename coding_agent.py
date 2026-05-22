@@ -30,8 +30,8 @@ def build_harness_context() -> str:
 # See: https://openrouter.ai/docs/client-sdks/python/overview
 # ---------------------------------------------------------------------------
 
-LLM_API_KEY = os.environ["LLM_API_KEY"]
-MODEL  = os.getenv("MODEL")
+LLM_API_KEY = os.environ["LLM_API_KEY"] # If this fails I WANT IT TO CRASH so I know the problem is with this
+MODEL  = os.environ["MODEL"]
 client = OpenRouter(api_key=LLM_API_KEY)
 
 # ---------------------------------------------------------------------------
@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 # OpenRouter response schema: response.choices[0].message
                 reply = response.choices[0].message
 
-                print("Content: ", reply.content)
+                print("Content: ", reply.content, end="\n\n")
 
                 # Append assistant turn to history as a plain dict
                 messages.append({
@@ -179,11 +179,10 @@ if __name__ == "__main__":
 
                 if not tool_calls:
                     # No more tool calls — print the final reply and exit
-                    print(reply.content)
                     elapsed = time.time() - start_time
                     hours, rem = divmod(elapsed, 3600)
                     minutes, seconds = divmod(rem, 60)
-                    print(f"\nTime taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}")
+                    print(f"Time taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}", end="\n\n")
                     break
 
                 # Execute each tool call and feed results back
@@ -195,7 +194,7 @@ if __name__ == "__main__":
                         fn_args = json.loads(fn_args)
 
                     msg = f"Calling {fn_name} with arguments {fn_args}"
-                    print(msg if len(msg) <= 200 else msg[:200] + "… … …") # prevent printing of super long arguments such as file contents
+                    print(msg if len(msg) <= 200 else msg[:200] + "… … …", end="\n\n") # prevent printing of super long arguments such as file contents
 
                     if fn_name in available_functions:
                         try:
@@ -208,7 +207,7 @@ if __name__ == "__main__":
                     else:
                         result = f"Unknown tool: {fn_name}"
 
-                    print(f"Result: {result}")
+                    print(f"Result: {result}", end="\n\n")
 
                     # Tool result message — role must be "tool" with matching tool_call_id
                     messages.append({

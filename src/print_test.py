@@ -1,1 +1,1 @@
-# put print test here
+print("Who dares enter my lair?")
