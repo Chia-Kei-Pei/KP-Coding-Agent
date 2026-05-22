@@ -2,8 +2,10 @@
 
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# ROOT_DIR is the parent of the harness/ folder (i.e. agent2_harness/)
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+echo "Root directory: ${ROOT_DIR}"
 
 # Activate conda environment.
 # conda activate does not work in non-interactive shells by default,
@@ -16,7 +18,7 @@ unset SSL_CERT_FILE  # conda activation sets this to a non-existent path; unset 
 
 INSTALL_CMD=(pip install -r requirements.txt)
 VERIFY_CMD=(true)  # no tests yet — replace with e.g. (python -m pytest) when ready
-START_CMD=() # AGENT must write the command to execute the resulting program in these round brackets, e.g. (python src/hello_world.py)
+START_CMD=(python src/pong_game_v3.py)
 
 echo "==> Working directory: $PWD"
 echo "==> Syncing dependencies"
