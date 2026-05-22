@@ -1,7 +1,7 @@
 import os
 import time
 import json
-from ollama import Client, ChatResponse, ResponseError
+from openrouter import OpenRouter
 
 # ---------------------------------------------------------------------------
 # Harness file loading — read context files at startup
@@ -29,9 +29,8 @@ def build_harness_context() -> str:
 # Initialize OpenRouter client
 # ---------------------------------------------------------------------------
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL  = "gemma4"
-client = Client(host=OLLAMA_HOST)
+client = OpenRouter(api_key=os.getenv("LLM_API_KEY"))
+MODEL = os.getenv("MODEL")
 
 # ---------------------------------------------------------------------------
 # Tool definitions — explicit JSON schema passed to the Ollama client.
@@ -151,7 +150,7 @@ if __name__ == "__main__":
     try:
         # Agentic loop: keep going until the model stops calling tools
         while True:
-            response: ChatResponse = client.chat(model=MODEL, messages=messages, tools=tools, think=True)
+            response = client.chat.send(model=MODEL, messages=messages, tools=tools)
 
             # Append the assistant turn to history
             messages.append(response.message.model_dump())
