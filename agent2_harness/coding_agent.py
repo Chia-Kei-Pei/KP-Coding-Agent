@@ -42,16 +42,16 @@ tools = [
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": "Read the content of a file from the src folder.",
+            "description": "Read the content of a file.",
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "filename": {
+                    "file_path": {
                         "type": "string",
-                        "description": "The filename only, e.g. 'main.py'. Do not include any folder prefix."
+                        "description": "The absolute file path including file directory and file name, e.g. 'C:\\Users\\User\\Documents\\file.txt'. Never use relative file path such as '.\\Documents\\file.txt'."
                     }
                 },
-                "required": ["filename"]
+                "required": ["file_path"]
             }
         }
     },
@@ -63,16 +63,16 @@ tools = [
             "parameters": {
                 "type": "object",
                 "properties": {
-                    "filename": {
+                    "file_path": {
                         "type": "string",
-                        "description": "The filename only, e.g. 'main.py' or 'helpers.js'. Do not include any folder prefix."
+                        "description": "The absolute file path including file directory and file name, e.g. 'C:\\Users\\User\\Documents\\file.txt'. Never use relative file path such as '.\\Documents\\file.txt'."
                     },
                     "content": {
                         "type": "string",
                         "description": "The full file content to write."
                     }
                 },
-                "required": ["filename", "content"]
+                "required": ["file_path", "content"]
             }
         }
     }
@@ -82,10 +82,8 @@ tools = [
 # Tool implementations
 # ---------------------------------------------------------------------------
 
-def read_file(filename: str) -> str:
-    """Read a file from src/<filename>."""
-    safe_name = filename.lstrip("/").lstrip(".")
-    file_path = os.path.join(SCRIPT_DIR, "src", safe_name)
+def read_file(file_path: str) -> str:
+    """Read a file from <file_path>. Always use absolute file path."""
     try:
         with open(file_path, "r", encoding="utf-8") as f:
             return f.read()
@@ -94,26 +92,23 @@ def read_file(filename: str) -> str:
     except Exception as e:
         return f"Error reading {file_path}: {e}"
 
-def write_file(filename: str, content: str) -> str:
-    """Write content to src/<filename>, creating directories as needed."""
-    safe_name = filename.lstrip("/").lstrip(".")
-    file_dir  = os.path.join(SCRIPT_DIR, "src")
-    file_path = os.path.join(file_dir, safe_name)
-    os.makedirs(file_dir, exist_ok=True)
+def write_file(file_path: str, content: str) -> str:
+    """Write content to <file_path>, creating directories as needed. Always use absolute file path."""
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
     return f"Written to {file_path}"
 
 def handle_tool_call(tool_name: str, tool_args: dict) -> str:
     if tool_name == "read_file":
-        result = read_file(tool_args["filename"])
-        print(f"[tool] Read: {tool_args['filename']}")
+        result = read_file(tool_args["file_path"])
+        print(f"[tool] read_file: {tool_args["file_path"]}")
         return result
     if tool_name == "write_file":
-        result = write_file(tool_args["filename"], tool_args["content"])
-        print(f"[tool] {result}")
+        result = write_file(tool_args["file_path"], tool_args["content"])
+        print(f"[tool] write_file: {tool_args["file_path"]}")
         return result
-    return f"Unknown tool: {tool_name}"
+    return f"[tool] {tool_name}: UNKNOWN"
 
 # ---------------------------------------------------------------------------
 # Main
@@ -149,6 +144,7 @@ if __name__ == "__main__":
             messages.append({"role": "assistant", "content": msg.get("content", ""), "tool_calls": msg.get("tool_calls")})
 
             tool_calls = msg.get("tool_calls") or []
+
             if not tool_calls:
                 # No more tool calls — print the final reply and exit
                 print(msg.get("content", "").strip())
