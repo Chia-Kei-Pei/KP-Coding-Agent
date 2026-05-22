@@ -26,10 +26,10 @@ def build_harness_context() -> str:
     return "\n\n".join(sections)
 
 # ---------------------------------------------------------------------------
-# Initialize Ollama client
+# Initialize OpenRouter client
 # ---------------------------------------------------------------------------
 
-OLLAMA_HOST = "http://localhost:11434"
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL  = "gemma4"
 client = Client(host=OLLAMA_HOST)
 
