@@ -1,1 +1,1 @@
-print("Who dares enter my lair?")
+print("My way lai wai")

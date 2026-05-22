@@ -1,7 +1,7 @@
 import os
 import time
 import json
-from openrouter import OpenRouter
+from openai import OpenAI
 
 # ---------------------------------------------------------------------------
 # Harness file loading — read context files at startup
@@ -26,16 +26,23 @@ def build_harness_context() -> str:
     return "\n\n".join(sections)
 
 # ---------------------------------------------------------------------------
-# Initialize OpenRouter client
-# See: https://openrouter.ai/docs/client-sdks/python/overview
+# Initialize OpenAI client pointed at OpenRouter
+# Using the OpenAI SDK with OpenRouter's base URL is the recommended approach
+# for accessing OpenRouter-specific parameters (e.g. include_reasoning) via
+# extra_body, which the native OpenRouter SDK does not yet support.
+# See: https://github.com/openai/openai-python
+#      https://openrouter.ai (OpenAI-compatible API)
 # ---------------------------------------------------------------------------
 
-LLM_API_KEY = os.environ["LLM_API_KEY"] # If this fails I WANT IT TO CRASH so I know the problem is with this
-MODEL  = os.environ["MODEL"]
-client = OpenRouter(api_key=LLM_API_KEY)
+LLM_API_KEY = os.environ["LLM_API_KEY"]  # If this fails I WANT IT TO CRASH so I know the problem is with this
+MODEL       = os.environ["MODEL"]
+client      = OpenAI(
+    api_key=LLM_API_KEY,
+    base_url="https://openrouter.ai/api/v1"
+)
 
 # ---------------------------------------------------------------------------
-# Tool definitions — explicit JSON schema passed to the OpenRouter client.
+# Tool definitions — explicit JSON schema passed to the client.
 # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
 # ---------------------------------------------------------------------------
 
@@ -148,77 +155,81 @@ if __name__ == "__main__":
 
     try:
         # Agentic loop: keep going until the model stops calling tools.
-        # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
-        with client:
-            while True:
-                response = client.chat.send(model=MODEL, messages=messages, tools=tools, include_reasoning=True)
+        # extra_body passes OpenRouter-specific parameters not in the OpenAI spec.
+        # include_reasoning exposes the model's reasoning tokens in reply.reasoning.
+        # See: https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
+        while True:
+            response = client.chat.completions.create(
+                model=MODEL,
+                messages=messages,
+                tools=tools,
+                extra_body={"include_reasoning": True}
+            )
 
-                # OpenRouter response schema: response.choices[0].message
-                # Reasoning tokens appear in reply.reasoning when include_reasoning=True
-                # See: https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
-                reply = response.choices[0].message
+            # OpenAI SDK response schema: response.choices[0].message
+            reply = response.choices[0].message
 
-                if reply.reasoning:
-                    print("Thinking: ", reply.reasoning, end="\n\n")
-                print("Content: ", reply.content, end="\n\n")
+            if reply.reasoning:
+                print("Thinking: ", reply.reasoning, end="\n\n")
+            print("Content: ", reply.content, end="\n\n")
 
-                # Append assistant turn to history as a plain dict
-                messages.append({
-                    "role": "assistant",
-                    "content": reply.content or "",
-                    "tool_calls": [
-                        {
-                            "id": tc.id,
-                            "type": "function",
-                            "function": {
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments
-                            }
+            # Append assistant turn to history as a plain dict
+            messages.append({
+                "role":       "assistant",
+                "content":    reply.content or "",
+                "tool_calls": [
+                    {
+                        "id":   tc.id,
+                        "type": "function",
+                        "function": {
+                            "name":      tc.function.name,
+                            "arguments": tc.function.arguments
                         }
-                        for tc in (reply.tool_calls or [])
-                    ] or None
+                    }
+                    for tc in (reply.tool_calls or [])
+                ] or None
+            })
+
+            tool_calls = reply.tool_calls or []
+
+            if not tool_calls:
+                # No more tool calls — print the final reply and exit
+                elapsed = time.time() - start_time
+                hours, rem = divmod(elapsed, 3600)
+                minutes, seconds = divmod(rem, 60)
+                print(f"Time taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}", end="\n\n")
+                break
+
+            # Execute each tool call and feed results back
+            for tc in tool_calls:
+                fn_name = tc.function.name
+                # arguments may be a dict already or a JSON string depending on the model
+                fn_args = tc.function.arguments
+                if isinstance(fn_args, str):
+                    fn_args = json.loads(fn_args)
+
+                msg = f"Calling {fn_name} with arguments {fn_args}"
+                print(msg if len(msg) <= 200 else msg[:200] + "… … …", end="\n\n")
+
+                if fn_name in available_functions:
+                    try:
+                        result = available_functions[fn_name](**fn_args)
+                    except TypeError as e:
+                        result = (
+                            f"Error calling {fn_name}: {e}. "
+                            "Tool calling must specify all arguments by name\n"
+                        )
+                else:
+                    result = f"Unknown tool: {fn_name}"
+
+                print(f"Result: {result}", end="\n\n")
+
+                # Tool result message — role must be "tool" with matching tool_call_id
+                messages.append({
+                    "role":         "tool",
+                    "tool_call_id": tc.id,
+                    "content":      str(result)
                 })
-
-                tool_calls = reply.tool_calls or []
-
-                if not tool_calls:
-                    # No more tool calls — print the final reply and exit
-                    elapsed = time.time() - start_time
-                    hours, rem = divmod(elapsed, 3600)
-                    minutes, seconds = divmod(rem, 60)
-                    print(f"Time taken: {int(hours):02}:{int(minutes):02}:{seconds:05.2f}", end="\n\n")
-                    break
-
-                # Execute each tool call and feed results back
-                for tc in tool_calls:
-                    fn_name = tc.function.name
-                    # arguments may be a dict already or a JSON string depending on the model
-                    fn_args = tc.function.arguments
-                    if isinstance(fn_args, str):
-                        fn_args = json.loads(fn_args)
-
-                    msg = f"Calling {fn_name} with arguments {fn_args}"
-                    print(msg if len(msg) <= 200 else msg[:200] + "… … …", end="\n\n") # prevent printing of super long arguments such as file contents
-
-                    if fn_name in available_functions:
-                        try:
-                            result = available_functions[fn_name](**fn_args)
-                        except TypeError as e:
-                            result = (
-                                f"Error calling {fn_name}: {e}. "
-                                "Tool calling must specify all arguments by name\n"
-                            )
-                    else:
-                        result = f"Unknown tool: {fn_name}"
-
-                    print(f"Result: {result}", end="\n\n")
-
-                    # Tool result message — role must be "tool" with matching tool_call_id
-                    messages.append({
-                        "role":         "tool",
-                        "tool_call_id": tc.id,
-                        "content":      str(result)
-                    })
 
     except Exception as e:
         raise RuntimeError(f"Failed to generate response: {e}") from e
