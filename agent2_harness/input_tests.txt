@@ -1,0 +1,2 @@
+Read contents of agent2_harness/res/read_test.txt, remember contents, then write a simple python program agent2_harness/src/print_test.py which contains a single line of code: print(<read_test_contents>) where <read_test_contents> is the hardcoded contents of the text file.
+
