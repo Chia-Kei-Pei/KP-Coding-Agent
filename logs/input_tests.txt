@@ -1,2 +1,3 @@
 Read contents of res/read_test.txt, remember contents, then write a simple python program src/print_test.py which contains a single line of code: print(<read_test_contents>) where <read_test_contents> is the hardcoded contents of the text file.
 
+Make a simple pong game. Save it in src/pong_game.py, don't create a new file for pong_game.py, exit early and don't code anything if you cannot find that existing file.

@@ -151,11 +151,15 @@ if __name__ == "__main__":
         # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
         with client:
             while True:
-                response = client.chat.send(model=MODEL, messages=messages, tools=tools)
+                response = client.chat.send(model=MODEL, messages=messages, tools=tools, include_reasoning=True)
 
                 # OpenRouter response schema: response.choices[0].message
+                # Reasoning tokens appear in reply.reasoning when include_reasoning=True
+                # See: https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
                 reply = response.choices[0].message
 
+                if reply.reasoning:
+                    print("Thinking: ", reply.reasoning, end="\n\n")
                 print("Content: ", reply.content, end="\n\n")
 
                 # Append assistant turn to history as a plain dict
