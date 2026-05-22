@@ -30,8 +30,9 @@ def build_harness_context() -> str:
 # See: https://openrouter.ai/docs/client-sdks/python/overview
 # ---------------------------------------------------------------------------
 
-client = OpenRouter(api_key=os.getenv("LLM_API_KEY"))
+LLM_API_KEY = os.environ["LLM_API_KEY"]
 MODEL  = os.getenv("MODEL")
+client = OpenRouter(api_key=LLM_API_KEY)
 
 # ---------------------------------------------------------------------------
 # Tool definitions — explicit JSON schema passed to the OpenRouter client.
