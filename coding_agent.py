@@ -37,8 +37,8 @@ def build_harness_context() -> str:
 # If Environment variables fail I WANT IT TO CRASH so I know the problem is with this
 LLM_API_KEY = os.environ["LLM_API_KEY"]
 LLM_BASE_URL = os.environ["LLM_BASE_URL"]
-MODEL       = os.environ["MODEL"]
-client      = OpenAI(
+LLM_MODEL = os.environ["LLM_MODEL"]
+client = OpenAI(
     api_key = LLM_API_KEY,
     base_url = LLM_BASE_URL
 )
@@ -162,7 +162,7 @@ if __name__ == "__main__":
         # See: https://openrouter.ai/docs/guides/best-practices/reasoning-tokens
         while True:
             response = client.chat.completions.create(
-                model=MODEL,
+                model=LLM_MODEL,
                 messages=messages,
                 tools=tools,
                 extra_body={
