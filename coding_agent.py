@@ -34,11 +34,13 @@ def build_harness_context() -> str:
 #      https://openrouter.ai (OpenAI-compatible API)
 # ---------------------------------------------------------------------------
 
-LLM_API_KEY = os.environ["LLM_API_KEY"]  # If this fails I WANT IT TO CRASH so I know the problem is with this
+# If Environment variables fail I WANT IT TO CRASH so I know the problem is with this
+LLM_API_KEY = os.environ["LLM_API_KEY"]
+LLM_BASE_URL = os.environ["LLM_BASE_URL"]
 MODEL       = os.environ["MODEL"]
 client      = OpenAI(
-    api_key=LLM_API_KEY,
-    base_url="https://openrouter.ai/api/v1"
+    api_key = LLM_API_KEY,
+    base_url = LLM_BASE_URL
 )
 
 # ---------------------------------------------------------------------------
