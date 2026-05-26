@@ -9,7 +9,7 @@ next session can continue without guessing.
 Before writing code:
 
 1. Confirm the working directory with `pwd`.
-2. Read `claude-progress.md` for the latest verified state and next step.
+2. Read `progress.md` for the latest verified state and next step.
 3. Read `feature_list.json` and choose the highest-priority unfinished feature.
 4. Review recent commits with `git log --oneline -5`.
 5. Run `./init.sh`.
@@ -30,7 +30,7 @@ feature work on top of a broken starting state.
 ## Required Artifacts
 
 - `feature_list.json`: source of truth for feature state
-- `claude-progress.md`: session log and current verified status
+- `progress.md`: session log and current verified status
 - `init.sh`: standard startup and verification path
 - `session-handoff.md`: optional compact handoff for larger sessions
 
@@ -40,14 +40,14 @@ A feature is done only when all of the following are true:
 
 - the target behavior is implemented
 - the required verification actually ran
-- evidence is recorded in `feature_list.json` or `claude-progress.md`
+- evidence is recorded in `feature_list.json` or `progress.md`
 - the repository remains restartable from the standard startup path
 
 ## End Of Session
 
 Before ending a session:
 
-1. Update `claude-progress.md`.
+1. Update `progress.md`.
 2. Update `feature_list.json`.
 3. Record any unresolved risk or blocker.
 4. Commit with a descriptive message once the work is in a safe state.

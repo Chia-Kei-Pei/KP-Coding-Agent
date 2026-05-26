@@ -8,15 +8,15 @@ from openai import OpenAI
 # All files are expected to sit alongside this script.
 # ---------------------------------------------------------------------------
 
-SCRIPT_DIR    = os.path.dirname(os.path.abspath(__file__))
-HARNESS_FILES = ["AGENTS.md", "init.sh", "feature_list.json", "claude-progress.md"]
+WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
+HARNESS_FILES = ["AGENTS.md", "init.sh", "feature_list.json", "progress.md"]
 
 def build_harness_context() -> str:
     """Read each harness file and build a single context block for the system prompt.
     Missing files are reported but do not abort startup."""
     sections = []
     for filename in HARNESS_FILES:
-        filepath = os.path.join(SCRIPT_DIR, "harness", filename)
+        filepath = os.path.join(WORKING_DIR, filename)
         try:
             with open(filepath, "r", encoding="utf-8") as f:
                 sections.append(f"=== {filepath} ===\n{f.read()}")
@@ -130,6 +130,10 @@ available_functions = {
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
+    print("\n================= Working Directory ===============================\n")
+
+    WORKING_DIR = os.path.abspath(input("Enter Working Directory: ").strip())
+
     harness_context = build_harness_context()
 
     system_prompt = (
@@ -139,7 +143,7 @@ if __name__ == "__main__":
         "When writing code, you MUST use the write_file tool to save it to the 'src' folder. "
         "You may use the read_file tool to read existing files from the 'src' folder. "
         "Never output code blocks in your reply — always call write_file instead. "
-        f"Your Working Directory is {SCRIPT_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
+        f"Your Working Directory is {WORKING_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
         "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
         "When calling write_file, you MUST always provide both file_path AND content. Never call write_file with only content. "
         "ALWAYS WRITE CODE TO A FILE, NEVER WRITE CODE IN YOUR REPLY."
