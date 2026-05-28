@@ -1,1 +1,2 @@
-# Project 01. Prompt-Only vs. Rules-First: How Much Difference Does It Make
+# KP Coding Agent
+I am still figuring things out.
