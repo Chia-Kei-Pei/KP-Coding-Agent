@@ -32,7 +32,6 @@ feature work on top of a broken starting state.
 - `feature_list.json`: source of truth for feature state
 - `progress.md`: session log and current verified status
 - `init.sh`: standard startup and verification path
-- `session-handoff.md`: optional compact handoff for larger sessions
 
 ## Definition Of Done
 
