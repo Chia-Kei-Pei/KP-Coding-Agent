@@ -2,8 +2,7 @@ import os
 import time
 import json
 from openai import OpenAI
-
-import tools
+import tools as tools
 
 # ---------------------------------------------------------------------------
 # Harness file loading — read context files at startup
