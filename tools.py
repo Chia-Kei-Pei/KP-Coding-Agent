@@ -16,18 +16,18 @@ ALLOWED_COMMAND_PREFIXES = [
     "python",
     "pip",
     "pip3",
-    "cat",
-    "ls",
     "mkdir",
     "cp",
     "mv",
     "rm",
     "echo",
-    "type",    # Windows equivalent of cat
-    "dir",     # Windows equivalent of ls
     "pytest",
     "git",
+    "type",
+    "dir",
+    "git"
 ]
+
 
 SHELL_TIMEOUT = 30  # seconds — kills runaway processes
 
@@ -100,7 +100,7 @@ schema: list = [
                         "type": "string",
                         "description": (
                             "The shell command to run. "
-                            "Examples: 'pip install pygame', 'python src/pong_game.py', 'ls src/'."
+                            "Examples: 'pip install pygame', 'python src\\pong_game.py', 'dir src\\'."
                         )
                     }
                 },

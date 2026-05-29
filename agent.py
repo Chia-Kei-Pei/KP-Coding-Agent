@@ -2,15 +2,12 @@ import os
 import time
 import json
 from openai import OpenAI
+from dotenv import load_dotenv
+
 import tools as tools
 
-# ---------------------------------------------------------------------------
-# Harness file loading — read context files at startup
-# All files are expected to sit alongside this script.
-# ---------------------------------------------------------------------------
-
-WORKING_DIR = os.path.dirname(os.path.abspath(__file__))
-HARNESS_FILES = ["AGENTS.md", "init.sh", "feature_list.json", "progress.md"]
+# Initialize Environment Subsystem
+load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Initialize OpenAI client pointed at OpenRouter
@@ -25,6 +22,8 @@ HARNESS_FILES = ["AGENTS.md", "init.sh", "feature_list.json", "progress.md"]
 LLM_API_KEY = os.environ["LLM_API_KEY"]
 LLM_BASE_URL = os.environ["LLM_BASE_URL"]
 LLM_MODEL = os.environ["LLM_MODEL"]
+CONTEXT_WINDOW = int(os.environ["CONTEXT_WINDOW"])
+HALLUNCINATION_THRESHOLD = 0.75
 client = OpenAI(
     api_key = LLM_API_KEY,
     base_url = LLM_BASE_URL
@@ -40,34 +39,24 @@ if __name__ == "__main__":
     WORKING_DIR = os.path.abspath(input("Enter Working Directory: ").strip())
     print("")
 
-    # Read each harness file and build a single context block for the system prompt.
-    # Missing files are reported but do not abort startup.
-    sections = []
-    for filename in HARNESS_FILES:
-        filepath = os.path.join(WORKING_DIR, filename)
-        try:
-            with open(filepath, "r", encoding="utf-8") as f:
-                sections.append(f"=== {filepath} ===\n{f.read()}")
-            print(f"[harness] Read: {filepath}")
-        except FileNotFoundError:
-            print(f"[harness] Warning: {filepath} not found — skipping.")
-    harness_context = "\n\n".join(sections)
-    print("")
+    system_prompt = f"""
+You are an advanced agent working inside a structured Harness Engineering pipeline.
+The repository state serves as your absolute system of record.
+Your Working Directory is {WORKING_DIR}, search from here if user asks to read/write files while specifying a relative directory.
 
-    system_prompt = (
-        "You are a coding assistant operating inside a harness.\n\n"
-        "The following files provide your context and instructions:\n\n"
-        f"{harness_context}\n\n"
-        "When writing code, you MUST use the write_file tool to save it to the 'src' folder. "
-        "You may use the read_file tool to read existing files from the 'src' folder. "
-        "Never output code blocks in your reply — always call write_file instead. "
-        f"Your Working Directory is {WORKING_DIR}, search from here if user asks to read/write files while specifying a relative directory. "
-        "Always use absolute file paths when using read_file/write_file tools, never relative file paths. "
-        "When calling write_file, you MUST always provide both file_path AND content. Never call write_file with only content. "
-        "ALWAYS WRITE CODE TO A FILE, NEVER WRITE CODE IN YOUR REPLY."
-        "FOLLOW THE AGENTS.md file TO THE LETTER."
-        "FINISH MAKING ALL THE FEATURES IN THE FEATURE LIST BEFORE ENDING YOUR REPLY"
-    )
+### HIGH-LEVEL DIRECTORY RULES (AGENTS.md)\n
+{tools.read_file(os.path.join(WORKING_DIR, "AGENTS.md"))}
+
+### RUNTIME CONTINUITY STATE (PROGRESS.md)
+{tools.read_file(os.path.join(WORKING_DIR, "PROGRESS.md"))}
+
+OPERATING MANDATE:
+1. Review user tasks alongside the rigid guardrails outlined in AGENTS.md.
+2. If building files, you MUST run verification commands listed under AGENTS.md via the 'bash' tool to ensure compliance.
+3. Prior to concluding your processing loop you must:
+  3.1. Append to and clean up PROGRESS.md with tool updates.
+  3.2. Commit all changes to the local git repository with an appropriate message using the 'bash' tool. No need to push to remote.
+"""
 
     print("================= User Prompt ===============================", end="\n\n")
     user_prompt = input("> ").strip()
@@ -162,6 +151,17 @@ if __name__ == "__main__":
                     "tool_call_id": tc.id,
                     "content":      str(result)
                 })
+            
+            # HALLUNCINATION THRESHOLD tell the LLM to wrap up if Context Window fills beyond this threshold
+            if response.usage is not None:
+                context_used = response.usage.prompt_tokens / CONTEXT_WINDOW
+                if context_used >= HALLUNCINATION_THRESHOLD:
+                    messages.append({
+                        "role": "system",
+                        "content": f"WARNING: {context_used} of context window used. "
+                                    "You MUST conclude this processing loop as soon as possible.\n"
+                    })
+                    print(f"[WARNING]: {context_used} of context window used. Threshold is {HALLUNCINATION_THRESHOLD}.")
 
     except Exception as e:
         raise RuntimeError(f"Failed to generate response: {e}") from e
