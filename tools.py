@@ -26,7 +26,8 @@ ALLOWED_COMMAND_PREFIXES = [
     "type",
     "dir",
     "git",
-    ".\\venv\\Scripts\\activate"
+    ".\\venv\\Scripts\\activate",
+    "cd"
 ]
 
 

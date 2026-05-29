@@ -26,7 +26,10 @@ CONTEXT_WINDOW = int(os.environ["CONTEXT_WINDOW"])
 HALLUNCINATION_THRESHOLD = 0.75
 client = OpenAI(
     api_key = LLM_API_KEY,
-    base_url = LLM_BASE_URL
+    base_url = LLM_BASE_URL,
+    default_headers={
+        "X-OpenRouter-Title": "KP Harness Agent"
+    }
 )
 
 # ---------------------------------------------------------------------------
@@ -42,7 +45,7 @@ if __name__ == "__main__":
     system_prompt = f"""
 You are an advanced agent working inside a structured Harness Engineering pipeline.
 The repository state serves as your absolute system of record.
-Your Working Directory is {WORKING_DIR}, search from here if user asks to read/write files while specifying a relative directory.
+Your Working Directory is {WORKING_DIR}, start this directory by using the 'bash' tool to run the 'cd' command.
 
 ### HIGH-LEVEL DIRECTORY RULES (AGENTS.md)\n
 {tools.read_file(os.path.join(WORKING_DIR, "AGENTS.md"))}
@@ -57,6 +60,7 @@ OPERATING MANDATE:
   3.1. Append to and clean up PROGRESS.md with tool updates.
   3.2. Commit all changes to the local git repository with an appropriate message using the 'bash' tool. No need to push to remote.
 """
+    print(system_prompt, end="\n\n")
 
     print("================= User Prompt ===============================", end="\n\n")
     user_prompt = input("> ").strip()
