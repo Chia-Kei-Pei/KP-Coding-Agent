@@ -24,6 +24,9 @@ LLM_BASE_URL = os.environ["LLM_BASE_URL"]
 LLM_MODEL = os.environ["LLM_MODEL"]
 CONTEXT_WINDOW = int(os.environ["CONTEXT_WINDOW"])
 HALLUNCINATION_THRESHOLD = 0.75
+GIT_USER_NAME = os.environ["GIT_USER_NAME"]
+GIT_USER_EMAIL = os.environ["GIT_USER_EMAIL"]
+
 client = OpenAI(
     api_key = LLM_API_KEY,
     base_url = LLM_BASE_URL,
@@ -46,6 +49,11 @@ if __name__ == "__main__":
 You are an advanced agent working inside a structured Harness Engineering pipeline.
 The repository state serves as your absolute system of record.
 Your Working Directory is {WORKING_DIR}, start this directory by using the 'bash' tool to run the 'cd' command.
+
+Initialize git config with these commands:
+> git config --global user.name "{GIT_USER_NAME}"
+> git config --global user.email "{GIT_USER_EMAIL}"
+Once a feature is completed, commit to git with a message describing the added feature before trying to implement the next feature.
 
 ### HIGH-LEVEL DIRECTORY RULES (AGENTS.md)\n
 {tools.read_file(os.path.join(WORKING_DIR, "AGENTS.md"))}
