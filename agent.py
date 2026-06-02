@@ -53,7 +53,10 @@ Your Working Directory is {WORKING_DIR}, start this directory by using the 'bash
 Initialize git config with these commands:
 > git config --global user.name "{GIT_USER_NAME}"
 > git config --global user.email "{GIT_USER_EMAIL}"
-Once a feature is completed, commit to git with a message describing the added feature before trying to implement the next feature.
+
+Once a feature is completed you must do these before trying to implement the next feature
+> Append to and clean up PROGRESS.md with tool updates.
+> Commit all changes to the local git repository with an appropriate message using the 'bash' tool. No need to push to remote.
 
 ### HIGH-LEVEL DIRECTORY RULES (AGENTS.md)\n
 {tools.read_file(os.path.join(WORKING_DIR, "AGENTS.md"))}
@@ -64,9 +67,7 @@ Once a feature is completed, commit to git with a message describing the added f
 OPERATING MANDATE:
 1. Review user tasks alongside the rigid guardrails outlined in AGENTS.md.
 2. If building files, you MUST run verification commands listed under AGENTS.md via the 'bash' tool to ensure compliance.
-3. Prior to concluding your processing loop you must:
-  3.1. Append to and clean up PROGRESS.md with tool updates.
-  3.2. Commit all changes to the local git repository with an appropriate message using the 'bash' tool. No need to push to remote.
+3. Prior to concluding your processing loop you must remember to update PROGRESS.md and commit changes to Git again.
 """
     print(system_prompt, end="\n\n")
 
@@ -164,16 +165,17 @@ OPERATING MANDATE:
                     "content":      str(result)
                 })
             
-            # HALLUNCINATION THRESHOLD tell the LLM to wrap up if Context Window fills beyond this threshold
-            if response.usage is not None:
-                context_used = response.usage.prompt_tokens / CONTEXT_WINDOW
-                if context_used >= HALLUNCINATION_THRESHOLD:
-                    messages.append({
-                        "role": "system",
-                        "content": f"WARNING: {context_used} of context window used. "
-                                    "You MUST conclude this processing loop as soon as possible.\n"
-                    })
-                    print(f"[WARNING]: {context_used} of context window used. Threshold is {HALLUNCINATION_THRESHOLD}.")
+                # HALLUNCINATION THRESHOLD tell the LLM to wrap up if Context Window fills beyond this threshold
+                if response.usage is not None:
+                    context_used = response.usage.prompt_tokens / CONTEXT_WINDOW
+                    if context_used >= HALLUNCINATION_THRESHOLD:
+                        messages.append({
+                            "role": "system",
+                            "content": f"WARNING: {context_used} of context window used. "
+                                        "You MUST conclude this processing loop as soon as possible.\n"
+                        })
+                        print(f"[WARNING]: {context_used} of context window used. Threshold is {HALLUNCINATION_THRESHOLD}.")
+                        break
 
     except Exception as e:
         raise RuntimeError(f"Failed to generate response: {e}") from e
