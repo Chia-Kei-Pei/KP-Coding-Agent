@@ -54,9 +54,13 @@ Initialize git config with these commands:
 > git config --global user.name "{GIT_USER_NAME}"
 > git config --global user.email "{GIT_USER_EMAIL}"
 
+You must initialize the correct environment for the project (e.g. venv). This is to ensure dependencies are installed correctly (i.e. "pip install ...").
+
 Once a feature is completed you must do these before trying to implement the next feature
 > Append to and clean up PROGRESS.md with tool updates.
-> Commit all changes to the local git repository with an appropriate message using the 'bash' tool. No need to push to remote.
+> Commit all changes to the local git repository with an appropriate message using the 'bash' tool.
+  > No need to push to remote.
+  > IMPORTANT: Always stage changes of PROGRESS.md BEFORE commiting to git. By the final git commit, all changes of PROGRESS.md must be included.
 
 ### HIGH-LEVEL DIRECTORY RULES (AGENTS.md)\n
 {tools.read_file(os.path.join(WORKING_DIR, "AGENTS.md"))}
