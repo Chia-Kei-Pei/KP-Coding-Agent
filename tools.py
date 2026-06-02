@@ -109,6 +109,30 @@ schema: list = [
                 "required": ["command"]
             }
         }
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "ask_user",
+            "description": (
+                "When in doubt about a high-level decision (e.g. what framework should be used), you can consult the user. "
+                "Ask instead of guessing what to do. "
+                "Returns the user response."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "question": {
+                        "type": "string",
+                        "description": (
+                            "The question you want to ask the user about. "
+                            "You can describe the high-level decision, possible choices, and possible outcomes."
+                        )
+                    }
+                },
+                "required": ["question"]
+            }
+        }
     }
 ]
 
@@ -186,9 +210,16 @@ def bash(command: str, cwd: str | None = None) -> str:
         return f"Error: command timed out after {SHELL_TIMEOUT}s."
     except Exception as e:
         return f"Error running command: {e}"
+    
+def ask_user(question: str) -> str:
+    print("*** Agent Asks ***:\n" + question, end="\n\n")
+    user_response = input("*** User response ***:\n").strip()
+    print("\n")
+    return user_response
 
 available_functions = {
     "read_file":  read_file,
     "write_file": write_file,
     "bash":       bash,
+    "ask_user": ask_user,
 }
