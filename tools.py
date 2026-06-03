@@ -31,6 +31,11 @@ ALLOWED_COMMAND_PREFIXES = [
     ".\\venv\\Scripts\\activate"
 ]
 
+UNALLOWED_COMMAND_PREFIXES = [
+    "cd",
+    "sudo"
+]
+
 
 SHELL_TIMEOUT = 30  # seconds — kills runaway processes
 
@@ -93,6 +98,7 @@ schema: list = [
                 "Run a shell command with least-privilege restrictions. "
                 "Use this for installing packages, running scripts, and inspecting the filesystem. "
                 f"Permitted commands: {', '.join(ALLOWED_COMMAND_PREFIXES)}. "
+                f"Banned commands: {', '.join(UNALLOWED_COMMAND_PREFIXES)}. "
                 "Working directory is locked to the project root. "
                 "Do not use this to read or write files. Instead, use read_file or write_file respectfully."
             ),
