@@ -26,6 +26,7 @@ CONTEXT_WINDOW = int(os.environ["CONTEXT_WINDOW"])
 HALLUNCINATION_THRESHOLD = 0.75
 GIT_USER_NAME = os.environ["GIT_USER_NAME"]
 GIT_USER_EMAIL = os.environ["GIT_USER_EMAIL"]
+WORKING_DIR = os.environ["WORKING_DIR"]
 
 client = OpenAI(
     api_key = LLM_API_KEY,
@@ -40,11 +41,6 @@ client = OpenAI(
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    print("\n================= Working Directory ===============================\n")
-
-    WORKING_DIR = os.path.abspath(input("Enter Working Directory: ").strip())
-    print("")
-
     system_prompt = f"""
 You are an advanced agent working inside a structured Harness Engineering pipeline.
 The repository state serves as your absolute system of record.

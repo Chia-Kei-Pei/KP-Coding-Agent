@@ -2,6 +2,8 @@ import os
 import shlex
 import subprocess
 
+WORKING_DIR = os.environ["WORKING_DIR"]
+
 # ---------------------------------------------------------------------------
 # Tool definitions — explicit JSON schema passed to the client.
 # See: https://openrouter.ai/docs/client-sdks/python/api-reference/chat
@@ -155,12 +157,12 @@ def write_file(file_path: str, content: str) -> str:
         f.write(content)
     return f"Written to {file_path}"
 
-def bash(command: str, cwd: str | None = None) -> str:
+def bash(command: str) -> str:
     """Run a shell command with least-privilege restrictions.
 
     Restrictions applied:
     - Only commands whose first token matches ALLOWED_COMMAND_PREFIXES are permitted.
-    - Working directory is locked to cwd (set by coding_agent.py to SCRIPT_DIR).
+    - Working directory is locked to WORKING_DIR (set by .env file).
     - Execution times out after SHELL_TIMEOUT seconds.
     - Environment is minimal — only essential host vars are inherited.
 
@@ -198,7 +200,7 @@ def bash(command: str, cwd: str | None = None) -> str:
         result = subprocess.run(
             command,
             shell=True,           # needed for compound commands and pipes
-            cwd=cwd,              # locked to project root by caller
+            cwd=WORKING_DIR,              # locked to project root by caller
             env=safe_env,
             capture_output=True,
             text=True,
