@@ -2,12 +2,8 @@ import os
 import time
 import json
 from openai import OpenAI
-from dotenv import load_dotenv
 
 import tools as tools
-
-# Initialize Environment Subsystem
-load_dotenv()
 
 # ---------------------------------------------------------------------------
 # Initialize OpenAI client pointed at OpenRouter
