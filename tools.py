@@ -144,7 +144,7 @@ schema: list = [
 
 def read_file(file_path: str) -> str:
     try:
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(os.path.join(WORKING_DIR, file_path), "r", encoding="utf-8") as f:
             return f.read()
     except FileNotFoundError:
         return f"Error: {file_path} not found."
@@ -152,8 +152,9 @@ def read_file(file_path: str) -> str:
         return f"Error reading {file_path}: {e}"
 
 def write_file(file_path: str, content: str) -> str:
-    os.makedirs(os.path.dirname(file_path), exist_ok=True)
-    with open(file_path, "w", encoding="utf-8") as f:
+    abs_file_path = os.path.join(WORKING_DIR, file_path)
+    os.makedirs(os.path.dirname(abs_file_path), exist_ok=True)
+    with open(abs_file_path, "w", encoding="utf-8") as f:
         f.write(content)
     return f"Written to {file_path}"
 
