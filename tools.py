@@ -40,16 +40,16 @@ schema: list = [
         "type": "function",
         "function": {
             "name": "read_file",
-            "description": "Read a file and return its contents. Always use an absolute file path.",
+            "description": "Read a file and return its contents. Always use a relative file path.",
             "parameters": {
                 "type": "object",
                 "properties": {
                     "file_path": {
                         "type": "string",
                         "description": (
-                            "The absolute path of the file to read. "
-                            "Example: 'C:\\Users\\User\\project\\src\\file.py'. "
-                            "Never use a relative path."
+                            "The relative path of the file to read. "
+                            "Example: 'src\\file.py'. "
+                            "Never use an absolute path."
                         )
                     }
                 },
@@ -72,9 +72,9 @@ schema: list = [
                     "file_path": {
                         "type": "string",
                         "description": (
-                            "The absolute path of the file to write. "
-                            "Example: 'C:\\Users\\User\\project\\src\\file.py'. "
-                            "Never use a relative path."
+                            "The relative path of the file to write. "
+                            "Example: 'src\\file.py'. "
+                            "Never use an absolute path."
                         )
                     },
                     "content": {
@@ -95,7 +95,7 @@ schema: list = [
                 "Use this for installing packages, running scripts, and inspecting the filesystem. "
                 f"Permitted commands: {', '.join(ALLOWED_COMMAND_PREFIXES)}. "
                 "Working directory is locked to the project root. "
-                "Do not use this to write files — use write_file instead."
+                "Do not use this to read or write files. Instead, use read_file or write_file respectfully."
             ),
             "parameters": {
                 "type": "object",

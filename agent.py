@@ -40,7 +40,7 @@ if __name__ == "__main__":
     system_prompt = f"""
 You are an advanced agent working inside a structured Harness Engineering pipeline.
 The repository state serves as your absolute system of record.
-Your Working Directory is {WORKING_DIR}, start this directory by using the 'bash' tool to run the 'cd' command.
+Your Working Directory is {WORKING_DIR}. The tools "read_file", "write_file" and "bash" all use in this directory.
 
 Initialize git config with these commands:
 > git config --global user.name "{GIT_USER_NAME}"
